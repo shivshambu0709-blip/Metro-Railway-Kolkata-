@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GREEN LINE // E&amp;M Asset Control — Kolkata Metro Railway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f1a;
+    --panel:#111a2b;
+    --panel-alt:#16223a;
+    --line:#233150;
+    --line-soft:#1a2540;
+    --text:#e7ecf5;
+    --text-dim:#8b98b4;
+    --text-faint:#5c6a89;
+    --green:#2fa76b;
+    --green-soft:rgba(47,167,107,.14);
+    --amber:#f2b23c;
+    --amber-soft:rgba(242,178,60,.14);
+    --red:#e05244;
+    --red-soft:rgba(224,82,68,.14);
+    --blue:#4c8dff;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Barlow Condensed',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    font-weight:700;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:inherit;}
+  ::selection{background:var(--green);color:#04120a;}
+
+  /* ---------- Layout shell ---------- */
+  .shell{display:flex;min-height:100vh;}
+  .sidebar{
+    width:230px;flex-shrink:0;background:var(--panel);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;
+  }
+  .brand{
+    padding:22px 18px 16px;border-bottom:1px solid var(--line);
+  }
+  .brand .tag{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;
+    letter-spacing:.14em;color:var(--green);background:var(--green-soft);
+    padding:3px 7px;border-radius:4px;margin-bottom:10px;
+  }
+  .brand h1{font-size:22px;line-height:1.05;margin:0 0 2px;color:var(--text);}
+  .brand p{margin:0;font-size:11px;color:var(--text-faint);letter-spacing:.05em;}
+
+  nav.tabs{padding:14px 10px;flex:1;overflow-y:auto;}
+  .tab-group-label{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-faint);
+    letter-spacing:.12em;padding:14px 10px 6px;
+  }
+  .tab-btn{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:none;border:none;color:var(--text-dim);
+    font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:600;
+    letter-spacing:.02em;text-transform:uppercase;
+    padding:9px 12px;border-radius:8px;cursor:pointer;margin-bottom:2px;
+  }
+  .tab-btn:hover{background:var(--panel-alt);color:var(--text);}
+  .tab-btn.active{background:var(--green-soft);color:var(--green);}
+  .tab-btn .dot{width:6px;height:6px;border-radius:50%;background:var(--text-faint);flex-shrink:0;}
+  .tab-btn.active .dot{background:var(--green);}
+  .sidebar-foot{
+    padding:14px 18px;border-top:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-faint);
+    line-height:1.6;
+  }
+
+  .main{flex:1;min-width:0;padding:28px 34px 60px;}
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .view-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;gap:20px;flex-wrap:wrap;}
+  .view-head h2{font-size:32px;margin:0;color:var(--text);}
+  .view-head .sub{color:var(--text-dim);font-size:13.5px;margin-top:4px;max-width:560px;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--green);letter-spacing:.14em;margin-bottom:4px;}
+
+  /* ---------- Status board (signature element) ---------- */
+  .board{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    margin-bottom:26px;background:var(--panel);
+  }
+  .board .cell{
+    padding:16px 20px;border-right:1px solid var(--line);position:relative;
+  }
+  .board .cell:last-child{border-right:none;}
+  .board .cell .k{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;}
+  .board .cell .v{font-family:'IBM Plex Mono',monospace;font-size:34px;font-weight:600;letter-spacing:.02em;line-height:1;}
+  .board .cell.ok .v{color:var(--green);}
+  .board .cell.warn .v{color:var(--amber);}
+  .board .cell.bad .v{color:var(--red);}
+  .board .cell .flicker{
+    position:absolute;top:14px;right:16px;width:7px;height:7px;border-radius:50%;
+  }
+  .board .cell.ok .flicker{background:var(--green);box-shadow:0 0 8px var(--green);}
+  .board .cell.warn .flicker{background:var(--amber);box-shadow:0 0 8px var(--amber);}
+  .board .cell.bad .flicker{background:var(--red);box-shadow:0 0 8px var(--red);animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+  .line-strip{
+    display:flex;align-items:center;gap:0;margin-bottom:26px;overflow-x:auto;
+    border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);padding:14px 18px;
+  }
+  .line-strip .station{
+    display:flex;align-items:center;gap:8px;flex-shrink:0;padding-right:22px;position:relative;
+  }
+  .line-strip .station::after{
+    content:'';position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    width:14px;height:2px;background:var(--line);
+  }
+  .line-strip .station:last-child::after{display:none;}
+  .line-strip .node{width:9px;height:9px;border-radius:50%;border:2px solid var(--green);background:var(--bg);flex-shrink:0;}
+  .line-strip .lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);white-space:nowrap;}
+
+  /* ---------- Grid / cards ---------- */
+  .grid-2{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start;}
+  @media (max-width:980px){.grid-2{grid-template-columns:1fr;}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;}
+  .card h3{font-size:17px;margin:0 0 14px;color:var(--text);display:flex;align-items:center;justify-content:space-between;}
+  .card h3 .count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-faint);text-transform:none;letter-spacing:0;font-weight:400;}
+
+  .mini-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13px;}
+  .mini-row:last-child{border-bottom:none;}
+  .mini-row .t1{color:var(--text);font-weight:500;}
+  .mini-row .t2{color:var(--text-faint);font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+  .empty-note{color:var(--text-faint);font-size:13px;padding:14px 0;font-style:normal;}
+
+  /* ---------- Forms ---------- */
+  .form-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:24px;}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field.wide{grid-column:1/-1;}
+  .field label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);letter-spacing:.08em;text-transform:uppercase;}
+  input,select,textarea{
+    background:var(--bg);border:1px solid var(--line);color:var(--text);
+    padding:9px 11px;border-radius:6px;font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;
+    outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--green);}
+  textarea{resize:vertical;min-height:60px;}
+  .form-actions{display:flex;gap:10px;margin-top:16px;align-items:center;}
+
+  button{cursor:pointer;font-family:'Barlow Condensed',sans-serif;}
+  .btn{
+    background:var(--green);color:#04160d;border:none;font-weight:700;font-size:15px;
+    letter-spacing:.03em;text-transform:uppercase;padding:10px 20px;border-radius:7px;
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .btn.secondary{background:transparent;border:1px solid var(--line);color:var(--text-dim);}
+  .btn.secondary:hover{color:var(--text);border-color:var(--text-faint);}
+  .btn.danger{background:var(--red-soft);color:var(--red);border:1px solid transparent;}
+  .btn.small{padding:5px 11px;font-size:12.5px;border-radius:5px;}
+  .save-flash{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--green);opacity:0;transition:opacity .3s;}
+  .save-flash.show{opacity:1;}
+
+  /* ---------- Tables ---------- */
+  .table-tools{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;justify-content:space-between;}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;}
+  .filters select,.filters input{font-size:12.5px;padding:7px 10px;}
+  .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px;}
+  thead th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-faint);
+    letter-spacing:.08em;text-transform:uppercase;padding:11px 14px;border-bottom:1px solid var(--line);
+    background:var(--panel-alt);white-space:nowrap;
+  }
+  tbody td{padding:11px 14px;border-bottom:1px solid var(--line-soft);color:var(--text-dim);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--panel-alt);}
+  td.strong{color:var(--text);font-weight:500;}
+  td.mono-cell{font-family:'IBM Plex Mono',monospace;font-size:12px;}
+
+  .badge{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;
+    padding:3px 9px;border-radius:20px;text-transform:uppercase;font-weight:500;
+  }
+  .badge.ok{background:var(--green-soft);color:var(--green);}
+  .badge.warn{background:var(--amber-soft);color:var(--amber);}
+  .badge.bad{background:var(--red-soft);color:var(--red);}
+  .badge.neutral{background:var(--panel-alt);color:var(--text-faint);border:1px solid var(--line);}
+
+  .row-actions{display:flex;gap:6px;}
+  .icon-btn{
+    background:none;border:1px solid var(--line);color:var(--text-faint);
+    width:26px;height:26px;border-radius:5px;font-size:13px;display:flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:hover{color:var(--red);border-color:var(--red);}
+
+  /* ---------- Asset category legend chips ---------- */
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .chip{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);
+    border:1px solid var(--line);padding:5px 11px;border-radius:20px;display:flex;align-items:center;gap:7px;
+  }
+  .chip .sw{width:7px;height:7px;border-radius:50%;}
+
+  /* Reports */
+  .report-output{
+    background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:20px;
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.8;color:var(--text-dim);white-space:pre-wrap;
+    max-height:520px;overflow-y:auto;
+  }
+  .report-output .rh{color:var(--green);font-weight:600;}
+
+  /* Job cards / documents grid */
+  .contractor-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-bottom:24px;}
+  .contractor-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .contractor-card .name{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;text-transform:uppercase;color:var(--text);margin-bottom:6px;}
+  .contractor-card .scope{color:var(--text-faint);font-size:12px;margin-bottom:10px;}
+  .contractor-card .stat{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-dim);padding-top:8px;border-top:1px solid var(--line-soft);}
+
+  .doc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+  .doc-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+  .doc-card .cat{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--green);letter-spacing:.1em;margin-bottom:8px;text-transform:uppercase;}
+  .doc-card h4{margin:0 0 6px;font-size:16px;color:var(--text);font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;}
+  .doc-card p{margin:0;font-size:12.5px;color:var(--text-faint);line-height:1.5;}
+
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media (max-width:760px){.contact-grid{grid-template-columns:1fr;}}
+
+  ::-webkit-scrollbar{height:8px;width:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  @media (max-width:860px){
+    .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%);transition:transform .2s;}
+    .sidebar.open{transform:translateX(0);}
+    .main{padding:20px 16px 60px;}
+    .menu-toggle{display:flex !important;}
+    .board{grid-template-columns:repeat(2,1fr);}
+    .board .cell:nth-child(2){border-right:none;}
+  }
+  .menu-toggle{
+    display:none;position:fixed;top:16px;left:16px;z-index:60;background:var(--panel);
+    border:1px solid var(--line);color:var(--text);width:38px;height:38px;border-radius:8px;
+    align-items:center;justify-content:center;font-size:16px;
+  }
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" id="menuToggle">☰</button>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="tag">GREEN LINE · KOLKATA</span>
+      <h1>E&amp;M ASSET<br>CONTROL</h1>
+      <p>Power Supply &amp; Rolling Stock Systems</p>
+    </div>
+    <nav class="tabs" id="tabNav">
+      <div class="tab-group-label">Overview</div>
+      <button class="tab-btn active" data-view="dashboard"><span class="dot"></span>Dashboard</button>
+
+      <div class="tab-group-label">Operations</div>
+      <button class="tab-btn" data-view="failures"><span class="dot"></span>Failure Log</button>
+      <button class="tab-btn" data-view="maintenance"><span class="dot"></span>Maintenance Schedule</button>
+      <button class="tab-btn" data-view="worklog"><span class="dot"></span>Daily Work Log</button>
+
+      <div class="tab-group-label">Records</div>
+      <button class="tab-btn" data-view="reports"><span class="dot"></span>Reports</button>
+      <button class="tab-btn" data-view="jobcards"><span class="dot"></span>Job Cards</button>
+      <button class="tab-btn" data-view="documents"><span class="dot"></span>Documents</button>
+      <button class="tab-btn" data-view="contact"><span class="dot"></span>Contact</button>
+    </nav>
+    <div class="sidebar-foot">
+      DEPOT: CENTRAL PARK<br>
+      DATA: SHARED WORKSPACE<br>
+      <span id="clock">--:--:--</span>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- ================= DASHBOARD ================= -->
+    <section class="view active" id="view-dashboard">
+      <div class="view-head">
+        <div>
+          <div class="eyebrow">Live Status</div>
+          <h2>Control Room Dashboard</h2>
+          <div class="sub">Real-time snapshot of asset health across Traction HT, LT distribution, TVS, lifts, escalators and fire/ECS systems.</div>
+        </div>
+      </div>
+
+      <div class="board" id="statBoard"></div>
+
+      <div class="line-strip" id="lineStrip"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Open Failures <span class="count" id="ofCount"></span></h3>
+          <div id="openFailuresList"></div>
+        </div>
+        <div class="card">
+          <h3>Maintenance Due / Overdue <span class="count" id="mdCount"></span></h3>
+          <div id="dueMaintList"></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:20px;">
+        <div class="card">
+          <h3>Today's Work Log <span class="count" id="wlCount"></span></h3>
+          <div id="todayLogList"></div>
+        </div>
+        <div class="card">
+          <h3>Failures by Asset Category</h3>
+          <div id="categoryBreakdown"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FAILURE LOG ================= -->
+    <section class="view" id="view-failures">
+      <div class="view-head">
+        <div>
+          <div class="eyebrow">Asset Failure Management</div>
+          <h2>Failure Log</h2>
+          <div class="sub">Record and track faults across 33kV switchgear, 750V DC HSCB, LT panels, TVS, lifts, escalators &amp; ECS/fire systems.</div>
+        </div>
+      </div>
+
+      <div class="chip-row" id="assetLegend"></div>
+
+      <div class="form-card">
+        <h3 style="margin-bottom:16px;">Log a New Failure</h3>
+        <form id="failureForm">
+          <div class="form-grid">
+            <div class="field">
+              <label>Asset Category</label>
+              <select name="category" required id="failCategory"></select>
+            </div>
+            <div class="field">
+              <label>Asset ID / Location</label>
+              <input type="text" name="assetId" placeholder="e.g. SS-2 33kV FDR-3" required>
+            </div>
+            <div class="field">
+              <label>Station / Depot</label>
+              <input type="text" name="station" placeholder="e.g. Central Park Depot">
+            </div>
+            <div class="field">
+              <label>Date Reported</label>
+              <input type="date" name="date" required>
+            </div>
+            <div class="field">
+              <label>Time Reported</label>
+              <input type="time" name="time" required>
+            </div>
+            <div class="field">
+              <label>Time Restored</label>
+              <input type="time" name="restoredTime">
+            </div>
+            <div class="field">
+              <label>Severity</label>
+              <select name="severity">
+                <option>Minor</option>
+                <option>Major</option>
+                <option>Critical</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select name="status">
+                <option>Open</option>
+                <option>Resolved</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Attended By</label>
+              <input type="text" name="attendedBy" placeholder="Name / Team">
+            </div>
+            <div class="field wide">
+              <label>Fault Description</label>
+              <textarea name="description" placeholder="Describe the fault observed" required></textarea>
+            </div>
+            <div class="field wide">
+              <label>Action Taken / Remarks</label>
+              <textarea name="action" placeholder="Corrective action, parts replaced, etc."></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn">Save Failure Record</button>
+            <span class="save-flash" id="failFlash">✓ Saved</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="table-tools">
+        <div class="filters">
+          <select id="failFilterCategory"><option value="">All Categories</option></select>
+          <select id="failFilterStatus">
+            <option value="">All Status</option>
+            <option>Open</option>
+            <option>Resolved</option>
+          </select>
+          <input type="text" id="failSearch" placeholder="Search asset / description...">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Category</th><th>Asset ID</th><th>Station</th><th>Reported</th><th>Downtime</th><th>Severity</th><th>Status</th><th>Attended By</th><th></th>
+          </tr></thead>
+          <tbody id="failureTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= MAINTENANCE ================= -->
+    <section class="view" id="view-maintenance">
+      <div class="view-head">
+        <div>
+          <div class="eyebrow">Preventive Maintenance</div>
+          <h2>Maintenance Schedule</h2>
+          <div class="sub">Track scheduled maintenance frequency, last-done dates, and automatically flag what's due or overdue.</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3 style="margin-bottom:16px;">Add Maintenance Record</h3>
+        <form id="maintForm">
+          <div class="form-grid">
+            <div class="field">
+              <label>Asset Category</label>
+              <select name="category" required id="maintCategory"></select>
+            </div>
+            <div class="field">
+              <label>Asset ID / Location</label>
+              <input type="text" name="assetId" placeholder="e.g. Lift-3, Concourse" required>
+            </div>
+            <div class="field">
+              <label>Maintenance Type</label>
+              <input type="text" name="type" placeholder="e.g. Monthly PM, Annual OH" required>
+            </div>
+            <div class="field">
+              <label>Frequency (days)</label>
+              <input type="number" name="frequency" min="1" placeholder="e.g. 30" required>
+            </div>
+            <div class="field">
+              <label>Last Done Date</label>
+              <input type="date" name="lastDone" required>
+            </div>
+            <div class="field">
+              <label>Performed By</label>
+              <input type="text" name="performedBy" placeholder="Team / Contractor">
+            </div>
+            <div class="field wide">
+              <label>Remarks</label>
+              <textarea name="remarks" placeholder="Checklist reference, observations..."></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn">Save Maintenance Record</button>
+            <span class="save-flash" id="maintFlash">✓ Saved</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="table-tools">
+        <div class="filters">
+          <select id="maintFilterCategory"><option value="">All Categories</option></select>
+          <select id="maintFilterStatus">
+            <option value="">All Status</option>
+            <option value="ok">On Schedule</option>
+            <option value="warn">Due Soon</option>
+            <option value="bad">Overdue</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Category</th><th>Asset ID</th><th>Type</th><th>Frequency</th><th>Last Done</th><th>Next Due</th><th>Status</th><th>Performed By</th><th></th>
+          </tr></thead>
+          <tbody id="maintTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= DAILY WORK LOG ================= -->
+    <section class="view" id="view-worklog">
+      <div class="view-head">
+        <div>
+          <div class="eyebrow">Shift Handover Record</div>
+          <h2>Daily Work Log Book</h2>
+          <div class="sub">Chronological log of duty activities, shift-wise, for handover continuity.</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <h3 style="margin-bottom:16px;">New Log Entry</h3>
+        <form id="worklogForm">
+          <div class="form-grid">
+            <div class="field">
+              <label>Date</label>
+              <input type="date" name="date" required>
+            </div>
+            <div class="field">
+              <label>Shift</label>
+              <select name="shift" required>
+                <option>Morning (06:00–14:00)</option>
+                <option>Evening (14:00–22:00)</option>
+                <option>Night (22:00–06:00)</option>
+              </select>
+            </div>
+            <div class="field wide">
+              <label>Staff on Duty</label>
+              <input type="text" name="staff" placeholder="Names / designations" required>
+            </div>
+            <div class="field wide">
+              <label>Work Carried Out</label>
+              <textarea name="work" placeholder="Summary of activities performed this shift" required></textarea>
+            </div>
+            <div class="field wide">
+              <label>Handover Notes / Remarks</label>
+              <textarea name="handover" placeholder="Pending items, instructions for next shift"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn">Save Log Entry</button>
+            <span class="save-flash" id="worklogFlash">✓ Saved</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Date</th><th>Shift</th><th>Staff on Duty</th><th>Work Carried Out</th><th>Handover Notes</th><th></th>
+          </tr></thead>
+          <tbody id="worklogTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= REPORTS ================= -->
+    <section class="view" id="view-reports">
+      <div class="view-head">
+        <div>
+          <div class="eyebrow">Auto-Generated Summary</div>
+          <h2>Report Preparation</h2>
+          <div class="sub">Generate a failure, downtime and maintenance-compliance summary for any date range, ready to print or copy.</div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-grid" style="align-items:end;">
+          <div class="field">
+            <label>From Date</label>
+            <input type="date" id="reportFrom">
+          </div>
+          <div class="field">
+            <label>To Date</label>
+            <input type="date" id="reportTo">
+          </div>
+          <div class="field">
+            <label>Report Type</label>
+            <select id="reportType">
+              <option value="failure">Failure Summary</option>
+              <option value="maintenance">Maintenance Compliance</option>
+              <option value="worklog">Work Log Summary</option>
+              <option value="full">Full Combined Report</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn" id="genReportBtn">Generate Report</button>
+          <button class="btn secondary" id="printReportBtn">Print</button>
+        </div>
+      </div>
+
+      <div class="report-output" id="reportOutput">Select a date range and report type, then generate.</div>
+    </section>
+
+    <!-- ================= JOB CARDS ================= -->
+    <section class="view" id="view-jobcards">
+      <div class="view-head">
+        <div>
+          <div class="eyebrow">Contractor Records</div>
+          <h2>Job Cards</h2>
+          <div class="sub">Track job cards issued to maintenance contractors by scope of work.</div>
+        </div>
+      </div>
+
+      <div class="contractor-grid" id="contractorGrid"></div>
+
+      <div class="form-card">
+        <h3 style="margin-bottom:16px;">Issue a Job Card</h3>
+        <form id="jobcardForm">
+          <div class="form-grid">
+            <div class="field">
+              <label>Contractor</label>
+              <select name="contractor" id="jcContractor" required></select>
+            </div>
+            <div class="field">
+              <label>Job Card No.</label>
+              <input type="text" name="jcNo" placeholder="e.g. JC-2026-014" required>
+            </div>
+            <div class="field">
+              <label>Date Issued</label>
+              <input type="date" name="date" required>
+            </div>
+            <div class="field">
+              <label>Status</label>
+              <select name="status">
+                <option>Issued</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+              </select>
+            </div>
+            <div class="field wide">
+              <label>Scope of Work</label>
+              <textarea name="scope" placeholder="Describe the work covered by this job card" required></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn">Save Job Card</button>
+            <span class="save-flash" id="jcFlash">✓ Saved</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Job Card No.</th><th>Contractor</th><th>Date Issued</th><th>Scope</th><th>Status</th><th></th></tr></thead>
+          <tbody id="jobcardTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= DOCUMENTS ================= -->
+    <section class="view" id="view-documents">
+      <div class="view-head">
+        <div>
+          <div class="eyebrow">Reference Material</div>
+          <h2>Documents &amp; Asset Reference</h2>
+          <div class="sub">Quick reference on the asset categories tracked across this system.</div>
+        </div>
+      </div>
+      <div class="doc-list" id="docList"></div>
+    </section>
+
+    <!-- ================= CONTACT ================= -->
+    <section class="view" id="view-contact">
+      <div class="view-head">
+        <div>
+          <div class="eyebrow">Correspondence</div>
+          <h2>Contact</h2>
+          <div class="sub">Department contact points for escalation.</div>
+        </div>
+      </div>
+      <div class="contact-grid">
+        <div class="card">
+          <h3>Department</h3>
+          <div class="mini-row"><span class="t1">Section</span><span class="t2">E&amp;M / Power Supply</span></div>
+          <div class="mini-row"><span class="t1">Line</span><span class="t2">Green Line</span></div>
+          <div class="mini-row"><span class="t1">Depot</span><span class="t2">Central Park Depot</span></div>
+          <div class="mini-row"><span class="t1">Authority</span><span class="t2">Metro Railway, Kolkata</span></div>
+        </div>
+        <div class="card">
+          <h3>Escalation Note</h3>
+          <div class="empty-note">For urgent asset failures affecting train operations, follow the standing operating procedure for immediate verbal intimation to the Section Controller in addition to logging the record here.</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  // ---------------- Asset categories ----------------
+  const CATEGORIES = [
+    {id:'ht33', label:'33kV Switchgear (HT)', color:'#e05244'},
+    {id:'hscb', label:'750V DC HSCB', color:'#f2b23c'},
+    {id:'lt', label:'LT Assets (E&M)', color:'#4c8dff'},
+    {id:'tvs', label:'Tunnel Ventilation (TVS)', color:'#2fa76b'},
+    {id:'lift', label:'Lift', color:'#a678e8'},
+    {id:'escalator', label:'Escalator', color:'#e888c4'},
+    {id:'ecs', label:'ECS / Fire', color:'#5cc9d9'},
+  ];
+  const CONTRACTORS = ['SIEMENS','ETA','SWPL','UMPESL','VOLTAS','JLPL','AFCONS'];
+  const DOC_REF = [
+    {cat:'ht33', name:'33kV Switchgear', desc:'High-tension incoming/outgoing feeder switchgear at receiving substations. Governs traction power availability.'},
+    {cat:'hscb', name:'750V DC HSCB', desc:'High Speed Circuit Breakers on the DC traction network, protecting the third rail feed to trains.'},
+    {cat:'lt', name:'LT Assets', desc:'Low-tension distribution boards, panels and auxiliary supply equipment serving station and depot loads.'},
+    {cat:'tvs', name:'Tunnel Ventilation System', desc:'Jet fans and ventilation shafts maintaining tunnel air quality and smoke extraction in emergencies.'},
+    {cat:'lift', name:'Lifts', desc:'Passenger lifts at stations providing accessible vertical transport.'},
+    {cat:'escalator', name:'Escalators', desc:'Passenger escalators at station entries, concourses and platforms.'},
+    {cat:'ecs', name:'ECS / Fire Systems', desc:'Environmental control and fire detection/suppression systems across stations and depot.'},
+  ];
+
+  const KEYS = {
+    failures: 'kmrc:failures',
+    maintenance: 'kmrc:maintenance',
+    worklog: 'kmrc:worklog',
+    jobcards: 'kmrc:jobcards',
+  };
+
+  let DATA = { failures: [], maintenance: [], worklog: [], jobcards: [] };
+  let LOADED = false;
+
+  function catLabel(id){ const c = CATEGORIES.find(c=>c.id===id); return c ? c.label : id; }
+  function catColor(id){ const c = CATEGORIES.find(c=>c.id===id); return c ? c.color : '#8b98b4'; }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  // ---------------- Storage ----------------
+  async function loadAll(){
+    for(const k of Object.keys(KEYS)){
+      try{
+        const res = await window.storage.get(KEYS[k], true);
+        DATA[k] = res && res.value ? JSON.parse(res.value) : [];
+      }catch(e){
+        DATA[k] = [];
+      }
+    }
+    LOADED = true;
+  }
+
+  async function persist(key){
+    try{
+      const res = await window.storage.set(KEYS[key], JSON.stringify(DATA[key]), true);
+      return !!res;
+    }catch(e){
+      console.error('Storage error', e);
+      return false;
+    }
+  }
+
+  function flash(id){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'), 1600);
+  }
+
+  // ---------------- Nav ----------------
+  const views = document.querySelectorAll('.view');
+  const tabs = document.querySelectorAll('.tab-btn');
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabs.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      views.forEach(v=>v.classList.remove('active'));
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+      if(window.innerWidth<=860) document.getElementById('sidebar').classList.remove('open');
+      renderAll();
+    });
+  });
+  document.getElementById('menuToggle').addEventListener('click', ()=>{
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  // ---------------- Clock ----------------
+  function tickClock(){
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-IN',{hour12:false});
+  }
+  setInterval(tickClock, 1000); tickClock();
+
+  // ---------------- Populate selects ----------------
+  function populateCategorySelects(){
+    const opts = CATEGORIES.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+    document.getElementById('failCategory').innerHTML = opts;
+    document.getElementById('maintCategory').innerHTML = opts;
+    document.getElementById('failFilterCategory').innerHTML = '<option value="">All Categories</option>' + opts;
+    document.getElementById('maintFilterCategory').innerHTML = '<option value="">All Categories</option>' + opts;
+    document.getElementById('jcContractor').innerHTML = CONTRACTORS.map(c=>`<option>${c}</option>`).join('');
+  }
+
+  function renderLegend(){
+    document.getElementById('assetLegend').innerHTML = CATEGORIES.map(c=>
+      `<span class="chip"><span class="sw" style="background:${c.color}"></span>${c.label}</span>`
+    ).join('');
+  }
+
+  function renderLineStrip(){
+    document.getElementById('lineStrip').innerHTML = CATEGORIES.map(c=>
+      `<div class="station"><span class="node" style="border-color:${c.color}"></span><span class="lbl">${c.label}</span></div>`
+    ).join('');
+  }
+
+  // ---------------- Downtime calc ----------------
+  function downtimeMinutes(f){
+    if(!f.time || !f.restoredTime) return null;
+    const [rh,rm] = f.restoredTime.split(':').map(Number);
+    const [sh,sm] = f.time.split(':').map(Number);
+    let mins = (rh*60+rm) - (sh*60+sm);
+    if(mins < 0) mins += 24*60;
+    return mins;
+  }
+  function fmtMins(m){
+    if(m===null || m===undefined) return '—';
+    const h = Math.floor(m/60), mm = m%60;
+    return (h>0? h+'h ':'') + mm + 'm';
+  }
+
+  // ---------------- Maintenance status ----------------
+  function maintStatus(rec){
+    const last = new Date(rec.lastDone);
+    const next = new Date(last.getTime() + rec.frequency*86400000);
+    const now = new Date();
+    const daysLeft = Math.ceil((next - now)/86400000);
+    let status = 'ok';
+    if(daysLeft < 0) status = 'bad';
+    else if(daysLeft <= 7) status = 'warn';
+    return {next, daysLeft, status};
+  }
+  function fmtDate(d){
+    if(typeof d === 'string') d = new Date(d);
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  }
+
+  // ---------------- DASHBOARD ----------------
+  function renderDashboard(){
+    const openFailures = DATA.failures.filter(f=>f.status==='Open');
+    const maintWithStatus = DATA.maintenance.map(m=>({...m, ...maintStatus(m)}));
+    const dueSoon = maintWithStatus.filter(m=>m.status==='warn');
+    const overdue = maintWithStatus.filter(m=>m.status==='bad');
+    const todayLogs = DATA.worklog.filter(w=>w.date===todayStr());
+
+    document.getElementById('statBoard').innerHTML = `
+      <div class="cell ${openFailures.length? 'bad':'ok'}"><span class="flicker"></span><div class="k">Open Failures</div><div class="v">${openFailures.length}</div></div>
+      <div class="cell ${overdue.length? 'bad':'ok'}"><span class="flicker"></span><div class="k">Overdue Maintenance</div><div class="v">${overdue.length}</div></div>
+      <div class="cell ${dueSoon.length? 'warn':'ok'}"><span class="flicker"></span><div class="k">Due Within 7 Days</div><div class="v">${dueSoon.length}</div></div>
+      <div class="cell ok"><span class="flicker"></span><div class="k">Log Entries Today</div><div class="v">${todayLogs.length}</div></div>
+    `;
+
+    document.getElementById('ofCount').textContent = `(${openFailures.length})`;
+    document.getElementById('mdCount').textContent = `(${dueSoon.length + overdue.length})`;
+    document.getElementById('wlCount').textContent = `(${todayLogs.length})`;
+
+    const ofList = document.getElementById('openFailuresList');
+    ofList.innerHTML = openFailures.length ? openFailures.slice(-6).reverse().map(f=>`
+      <div class="mini-row"><span class="t1">${escapeHtml(f.assetId)} — ${catLabel(f.category)}</span><span class="t2">${f.date}</span></div>
+    `).join('') : `<div class="empty-note">No open failures. All clear.</div>`;
+
+    const dmList = document.getElementById('dueMaintList');
+    const dueCombined = [...overdue, ...dueSoon].slice(0,6);
+    dmList.innerHTML = dueCombined.length ? dueCombined.map(m=>`
+      <div class="mini-row"><span class="t1">${escapeHtml(m.assetId)} — ${escapeHtml(m.type)}</span><span class="t2"><span class="badge ${m.status}">${m.status==='bad'?'Overdue':'Due Soon'}</span></span></div>
+    `).join('') : `<div class="empty-note">Nothing due in the next 7 days.</div>`;
+
+    const wlList = document.getElementById('todayLogList');
+    wlList.innerHTML = todayLogs.length ? todayLogs.map(w=>`
+      <div class="mini-row"><span class="t1">${w.shift.split(' ')[0]} — ${escapeHtml(w.staff)}</span><span class="t2">${escapeHtml((w.work||'').slice(0,40))}${(w.work||'').length>40?'…':''}</span></div>
+    `).join('') : `<div class="empty-note">No log entries yet today.</div>`;
+
+    const catBreak = document.getElementById('categoryBreakdown');
+    const maxCount = Math.max(1, ...CATEGORIES.map(c=>DATA.failures.filter(f=>f.category===c.id).length));
+    catBreak.innerHTML = CATEGORIES.map(c=>{
+      const n = DATA.failures.filter(f=>f.category===c.id).length;
+      const pct = Math.round((n/maxCount)*100);
+      return `<div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-dim);margin-bottom:4px;">
+          <span>${c.label}</span><span class="mono">${n}</span>
+        </div>
+        <div style="height:6px;background:var(--line-soft);border-radius:4px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${c.color};"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    renderLineStrip();
+  }
+
+  // ---------------- FAILURES ----------------
+  function renderFailureTable(){
+    const catF = document.getElementById('failFilterCategory').value;
+    const statF = document.getElementById('failFilterStatus').value;
+    const searchF = document.getElementById('failSearch').value.toLowerCase();
+
+    let rows = DATA.failures.slice().reverse().filter(f=>{
+      if(catF && f.category!==catF) return false;
+      if(statF && f.status!==statF) return false;
+      if(searchF && !((f.assetId||'').toLowerCase().includes(searchF) || (f.description||'').toLowerCase().includes(searchF))) return false;
+      return true;
+    });
+
+    const tbody = document.getElementById('failureTableBody');
+    if(!rows.length){
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">No failure records match. Log the first one above.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(f=>{
+      const dt = downtimeMinutes(f);
+      const sevBadge = f.severity==='Critical' ? 'bad' : f.severity==='Major' ? 'warn' : 'neutral';
+      const statBadge = f.status==='Open' ? 'bad' : 'ok';
+      return `<tr>
+        <td><span class="badge neutral" style="border-color:${catColor(f.category)}33;color:${catColor(f.category)};background:${catColor(f.category)}1a;">${catLabel(f.category)}</span></td>
+        <td class="strong">${escapeHtml(f.assetId)}</td>
+        <td>${escapeHtml(f.station||'—')}</td>
+        <td class="mono-cell">${f.date} ${f.time}</td>
+        <td class="mono-cell">${fmtMins(dt)}</td>
+        <td><span class="badge ${sevBadge}">${f.severity}</span></td>
+        <td><span class="badge ${statBadge}">${f.status}</span></td>
+        <td>${escapeHtml(f.attendedBy||'—')}</td>
+        <td><div class="row-actions"><button class="icon-btn" data-del-fail="${f.id}" title="Delete">✕</button></div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('failureForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const rec = Object.fromEntries(fd.entries());
+    rec.id = uid();
+    DATA.failures.push(rec);
+    await persist('failures');
+    flash('failFlash');
+    e.target.reset();
+    renderAll();
+  });
+  document.getElementById('failureTableBody').addEventListener('click', async e=>{
+    const btn = e.target.closest('[data-del-fail]');
+    if(!btn) return;
+    DATA.failures = DATA.failures.filter(f=>f.id!==btn.dataset.delFail);
+    await persist('failures');
+    renderAll();
+  });
+  ['failFilterCategory','failFilterStatus','failSearch'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', renderFailureTable);
+  });
+
+  // ---------------- MAINTENANCE ----------------
+  function renderMaintTable(){
+    const catF = document.getElementById('maintFilterCategory').value;
+    const statF = document.getElementById('maintFilterStatus').value;
+
+    let rows = DATA.maintenance.slice().reverse().map(m=>({...m, ...maintStatus(m)})).filter(m=>{
+      if(catF && m.category!==catF) return false;
+      if(statF && m.status!==statF) return false;
+      return true;
+    });
+
+    const tbody = document.getElementById('maintTableBody');
+    if(!rows.length){
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-faint);padding:24px;">No maintenance records yet. Add one above.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(m=>{
+      const label = m.status==='bad'?'Overdue':m.status==='warn'?'Due Soon':'On Schedule';
+      return `<tr>
+        <td><span class="badge neutral">${catLabel(m.category)}</span></td>
+        <td class="strong">${escapeHtml(m.assetId)}</td>
+        <td>${escapeHtml(m.type)}</td>
+        <td class="mono-cell">${m.frequency}d</td>
+        <td class="mono-cell">${fmtDate(m.lastDone)}</td>
+        <td class="mono-cell">${fmtDate(m.next)}</td>
+        <td><span class="badge ${m.status}">${label}</span></td>
+        <td>${escapeHtml(m.performedBy||'—')}</td>
+        <td><div class="row-actions"><button class="icon-btn" data-del-maint="${m.id}" title="Delete">✕</button></div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('maintForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const rec = Object.fromEntries(fd.entries());
+    rec.id = uid();
+    rec.frequency = Number(rec.frequency);
+    DATA.maintenance.push(rec);
+    await persist('maintenance');
+    flash('maintFlash');
+    e.target.reset();
+    renderAll();
+  });
+  document.getElementById('maintTableBody').addEventListener('click', async e=>{
+    const btn = e.target.closest('[data-del-maint]');
+    if(!btn) return;
+    DATA.maintenance = DATA.maintenance.filter(m=>m.id!==btn.dataset.delMaint);
+    await persist('maintenance');
+    renderAll();
+  });
+  ['maintFilterCategory','maintFilterStatus'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', renderMaintTable);
+  });
+
+  // ---------------- WORK LOG ----------------
+  function renderWorklogTable(){
+    const rows = DATA.worklog.slice().reverse();
+    const tbody = document.getElementById('worklogTableBody');
+    if(!rows.length){
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:24px;">No log entries yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(w=>`
+      <tr>
+        <td class="mono-cell">${w.date}</td>
+        <td><span class="badge neutral">${w.shift.split(' ')[0]}</span></td>
+        <td class="strong">${escapeHtml(w.staff)}</td>
+        <td>${escapeHtml(w.work)}</td>
+        <td>${escapeHtml(w.handover||'—')}</td>
+        <td><div class="row-actions"><button class="icon-btn" data-del-log="${w.id}" title="Delete">✕</button></div></td>
+      </tr>
+    `).join('');
+  }
+  document.getElementById('worklogForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const rec = Object.fromEntries(fd.entries());
+    rec.id = uid();
+    DATA.worklog.push(rec);
+    await persist('worklog');
+    flash('worklogFlash');
+    e.target.reset();
+    renderAll();
+  });
+  document.getElementById('worklogTableBody').addEventListener('click', async e=>{
+    const btn = e.target.closest('[data-del-log]');
+    if(!btn) return;
+    DATA.worklog = DATA.worklog.filter(w=>w.id!==btn.dataset.delLog);
+    await persist('worklog');
+    renderAll();
+  });
+
+  // ---------------- JOB CARDS ----------------
+  function renderContractorGrid(){
+    document.getElementById('contractorGrid').innerHTML = CONTRACTORS.map(c=>{
+      const cards = DATA.jobcards.filter(j=>j.contractor===c);
+      const open = cards.filter(j=>j.status!=='Completed').length;
+      return `<div class="contractor-card">
+        <div class="name">${c}</div>
+        <div class="scope">${cards.length} job card${cards.length!==1?'s':''} on record</div>
+        <div class="stat"><span>Open</span><span class="mono">${open}</span></div>
+      </div>`;
+    }).join('');
+  }
+  function renderJobcardTable(){
+    const rows = DATA.jobcards.slice().reverse();
+    const tbody = document.getElementById('jobcardTableBody');
+    if(!rows.length){
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-faint);padding:24px;">No job cards issued yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map(j=>{
+      const badge = j.status==='Completed'?'ok':j.status==='In Progress'?'warn':'neutral';
+      return `<tr>
+        <td class="strong mono-cell">${escapeHtml(j.jcNo)}</td>
+        <td>${escapeHtml(j.contractor)}</td>
+        <td class="mono-cell">${j.date}</td>
+        <td>${escapeHtml(j.scope)}</td>
+        <td><span class="badge ${badge}">${j.status}</span></td>
+        <td><div class="row-actions"><button class="icon-btn" data-del-jc="${j.id}" title="Delete">✕</button></div></td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('jobcardForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const rec = Object.fromEntries(fd.entries());
+    rec.id = uid();
+    DATA.jobcards.push(rec);
+    await persist('jobcards');
+    flash('jcFlash');
+    e.target.reset();
+    renderAll();
+  });
+  document.getElementById('jobcardTableBody').addEventListener('click', async e=>{
+    const btn = e.target.closest('[data-del-jc]');
+    if(!btn) return;
+    DATA.jobcards = DATA.jobcards.filter(j=>j.id!==btn.dataset.delJc);
+    await persist('jobcards');
+    renderAll();
+  });
+
+  // ---------------- DOCUMENTS ----------------
+  function renderDocs(){
+    document.getElementById('docList').innerHTML = DOC_REF.map(d=>`
+      <div class="doc-card">
+        <div class="cat">${catLabel(d.cat)}</div>
+        <h4>${d.name}</h4>
+        <p>${d.desc}</p>
+      </div>
+    `).join('');
+  }
+
+  // ---------------- REPORTS ----------------
+  function inRange(dateStr, from, to){
+    if(!dateStr) return false;
+    if(from && dateStr < from) return false;
+    if(to && dateStr > to) return false;
+    return true;
+  }
+
+  function buildFailureReport(from, to){
+    const rows = DATA.failures.filter(f=>inRange(f.date, from, to));
+    let out = `FAILURE SUMMARY REPORT\nPeriod: ${from||'—'} to ${to||'—'}\nGenerated: ${new Date().toLocaleString('en-IN')}\n\n`;
+    out += `Total failures logged: ${rows.length}\n`;
+    out += `Open: ${rows.filter(r=>r.status==='Open').length}   Resolved: ${rows.filter(r=>r.status==='Resolved').length}\n\n`;
+    out += `BY CATEGORY\n`;
+    CATEGORIES.forEach(c=>{
+      const n = rows.filter(r=>r.category===c.id).length;
+      if(n) out += `  ${c.label}: ${n}\n`;
+    });
+    out += `\nBY SEVERITY\n`;
+    ['Critical','Major','Minor'].forEach(s=>{
+      const n = rows.filter(r=>r.severity===s).length;
+      if(n) out += `  ${s}: ${n}\n`;
+    });
+    const downtimes = rows.map(downtimeMinutes).filter(m=>m!==null);
+    const totalDown = downtimes.reduce((a,b)=>a+b,0);
+    out += `\nTotal recorded downtime: ${fmtMins(totalDown)} across ${downtimes.length} resolved event(s)\n`;
+    out += `\nDETAIL\n`;
+    rows.forEach(r=>{
+      out += `  [${r.date} ${r.time}] ${catLabel(r.category)} — ${r.assetId} — ${r.severity} — ${r.status}\n    ${r.description}\n`;
+    });
+    if(!rows.length) out += `  No records in this period.\n`;
+    return out;
+  }
+
+  function buildMaintReport(from, to){
+    const rows = DATA.maintenance.filter(m=>inRange(m.lastDone, from, to)).map(m=>({...m, ...maintStatus(m)}));
+    let out = `MAINTENANCE COMPLIANCE REPORT\nPeriod (by last-done date): ${from||'—'} to ${to||'—'}\nGenerated: ${new Date().toLocaleString('en-IN')}\n\n`;
+    const allStatus = DATA.maintenance.map(m=>maintStatus(m).status);
+    const okC = allStatus.filter(s=>s==='ok').length;
+    const warnC = allStatus.filter(s=>s==='warn').length;
+    const badC = allStatus.filter(s=>s==='bad').length;
+    const total = allStatus.length || 1;
+    out += `Overall fleet status (all records):\n  On schedule: ${okC}  |  Due soon: ${warnC}  |  Overdue: ${badC}\n`;
+    out += `  Compliance rate: ${Math.round((okC/total)*100)}%\n\n`;
+    out += `RECORDS PERFORMED IN PERIOD\n`;
+    rows.forEach(m=>{
+      out += `  [${m.lastDone}] ${catLabel(m.category)} — ${m.assetId} — ${m.type} — by ${m.performedBy||'—'}\n`;
+    });
+    if(!rows.length) out += `  No maintenance performed in this period.\n`;
+    return out;
+  }
+
+  function buildWorklogReport(from, to){
+    const rows = DATA.worklog.filter(w=>inRange(w.date, from, to));
+    let out = `WORK LOG SUMMARY\nPeriod: ${from||'—'} to ${to||'—'}\nGenerated: ${new Date().toLocaleString('en-IN')}\n\n`;
+    out += `Total entries: ${rows.length}\n\n`;
+    rows.forEach(w=>{
+      out += `  [${w.date} — ${w.shift}] Staff: ${w.staff}\n    Work: ${w.work}\n    Handover: ${w.handover||'—'}\n\n`;
+    });
+    if(!rows.length) out += `  No entries in this period.\n`;
+    return out;
+  }
+
+  document.getElementById('genReportBtn').addEventListener('click', ()=>{
+    const from = document.getElementById('reportFrom').value;
+    const to = document.getElementById('reportTo').value;
+    const type = document.getElementById('reportType').value;
+    let out = '';
+    if(type==='failure') out = buildFailureReport(from,to);
+    else if(type==='maintenance') out = buildMaintReport(from,to);
+    else if(type==='worklog') out = buildWorklogReport(from,to);
+    else out = buildFailureReport(from,to) + '\n' + '='.repeat(50) + '\n\n' + buildMaintReport(from,to) + '\n' + '='.repeat(50) + '\n\n' + buildWorklogReport(from,to);
+    document.getElementById('reportOutput').textContent = out;
+  });
+  document.getElementById('printReportBtn').addEventListener('click', ()=>{
+    const content = document.getElementById('reportOutput').textContent;
+    const w = window.open('', '_blank');
+    w.document.write(`<pre style="font-family:monospace;font-size:13px;white-space:pre-wrap;padding:20px;">${escapeHtml(content)}</pre>`);
+    w.document.close();
+    w.print();
+  });
+
+  // ---------------- Render orchestration ----------------
+  function renderAll(){
+    if(!LOADED) return;
+    renderDashboard();
+    renderFailureTable();
+    renderMaintTable();
+    renderWorklogTable();
+    renderContractorGrid();
+    renderJobcardTable();
+    renderDocs();
+  }
+
+  // ---------------- Defaults ----------------
+  function setDefaultDates(){
+    document.querySelectorAll('input[type="date"]').forEach(inp=>{
+      if(!inp.value && (inp.name==='date' || inp.name==='lastDone')) inp.value = todayStr();
+    });
+  }
+
+  // ---------------- Init ----------------
+  async function init(){
+    populateCategorySelects();
+    renderLegend();
+    setDefaultDates();
+    await loadAll();
+    renderAll();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
